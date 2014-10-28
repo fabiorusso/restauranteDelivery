@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<dataset>
+	
+	<item codigo="1" descricao="Coca-Cola 2L" valor="5.00"/>
+	<item codigo="2" descricao="Macarrão" valor="15.00"/>
+	<item codigo="3" descricao="Sorvete" valor="3.00"/>
+	<item codigo="4" descricao="Suco de Laranja" valor="4.5"/>
+	<item codigo="5" descricao="Yakisoba de carne" valor="20.00"/>
+	
+</dataset>
