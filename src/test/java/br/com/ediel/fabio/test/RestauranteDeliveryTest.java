@@ -1,6 +1,7 @@
 package br.com.ediel.fabio.test;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.fail;
 
 import java.util.List;
 
@@ -19,6 +20,11 @@ import org.jboss.shrinkwrap.api.spec.JavaArchive;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import br.com.ediel.fabio.restaurante.delivery.dao.AbstractDAO;
+import br.com.ediel.fabio.restaurante.delivery.dao.DAO;
+import br.com.ediel.fabio.restaurante.delivery.dao.DAOException;
+import br.com.ediel.fabio.restaurante.delivery.dao.ItemDAO;
+import br.com.ediel.fabio.restaurante.delivery.dao.ItemDAOJPA;
 import br.com.ediel.fabio.restaurante.delivery.model.Item;
 import br.com.ediel.fabio.restaurante.delivery.model.Pedido;
 import br.com.ediel.fabio.restaurante.delivery.model.Reclamacao;
@@ -30,7 +36,7 @@ public class RestauranteDeliveryTest {
 	public static JavaArchive createDeployArchive() {
 		return ShrinkWrap
 				.create(JavaArchive.class)
-				.addClasses(Item.class, Pedido.class, Reclamacao.class)
+				.addClasses(Item.class, Pedido.class, Reclamacao.class, AbstractDAO.class, ItemDAO.class, ItemDAOJPA.class, DAO.class, DAOException.class)
 				.addAsManifestResource(EmptyAsset.INSTANCE, "beans.xml")
 				.addAsResource("test-persistence.xml",
 						"META-INF/persistence.xml");
@@ -49,6 +55,22 @@ public class RestauranteDeliveryTest {
 		List<Item> result = em.createQuery(query).getResultList();
 		result.stream().forEach(i -> System.out.println(i));
 		assertEquals(5, result.size());
+	}
+	
+	@Test
+	@UsingDataSet("datasets/xml-test.xml")
+	public void testItemDao() {
+		ItemDAO dao = new ItemDAOJPA(em);
+		Item item = new Item();
+		item.setCodigo(6L);
+		item.setDescricao("mais um teste");
+		item.setValor(6.00);
+		
+		try {
+			dao.save(item);
+		} catch (DAOException e) {
+			fail(e.getMessage());
+		}
 	}
 
 }
