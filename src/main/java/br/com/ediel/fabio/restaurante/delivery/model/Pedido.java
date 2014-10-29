@@ -29,6 +29,16 @@ public class Pedido implements Serializable {
 
 	@Column(name = "valor_total")
 	private Double valorTotal;
+	
+	private Double frete;
+
+	public Double getFrete() {
+		return frete;
+	}
+
+	public void setFrete(Double frete) {
+		this.frete = frete;
+	}
 
 	private String observacao;
 
