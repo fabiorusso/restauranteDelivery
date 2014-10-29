@@ -7,18 +7,44 @@ import java.util.List;
 
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceException;
+import javax.persistence.criteria.CriteriaBuilder;
+import javax.persistence.criteria.CriteriaQuery;
 import javax.persistence.criteria.Expression;
 import javax.persistence.criteria.Path;
-
+import javax.persistence.criteria.Root;
 
 public class AbstractDAO<T, PK extends Serializable> implements DAO<T, PK> {
-	//private static final Logger logger = Logger.getLogger(AbstractDAO.class);
+	// private static final Logger logger = Logger.getLogger(AbstractDAO.class);
 	protected final Class<T> clazz;
 	protected final EntityManager entityManager;
 
 	public AbstractDAO(final EntityManager entityManager, Class<T> clazz) {
 		this.entityManager = entityManager;
 		this.clazz = clazz;
+	}
+
+	@Override
+	public List<T> loadAll() throws DAOException {
+
+		try {
+			CriteriaBuilder criteriaBuilder = entityManager
+					.getCriteriaBuilder();
+			CriteriaQuery<T> criteriaQuery = criteriaBuilder.createQuery(clazz);
+			Root<T> entity = criteriaQuery.from(clazz);
+			criteriaQuery.select(entity);
+			return entityManager.createQuery(criteriaQuery).getResultList();
+		} catch (PersistenceException e) {
+
+			throw new DAOException(e);
+
+		} catch (NullPointerException e) {
+
+			throw new DAOException(e);
+		} catch (RuntimeException e) {
+			throw new DAOException(e);
+		} catch (Exception e) {
+			throw new DAOException(e);
+		}
 	}
 
 	@Override
@@ -74,8 +100,6 @@ public class AbstractDAO<T, PK extends Serializable> implements DAO<T, PK> {
 		}
 	}
 
-	
-	
 	protected Expression<?> getExpression(String field, Path<?> entity) {
 
 		String[] fullPath = field.split("\\.");
@@ -121,5 +145,4 @@ public class AbstractDAO<T, PK extends Serializable> implements DAO<T, PK> {
 		}
 	}
 
-	
 }

@@ -10,4 +10,6 @@ public interface DAO<T, PK extends Serializable> {
 	T find(PK id) throws DAOException;
 	void delete(T obj) throws DAOException;
 	
+	List<T> loadAll() throws DAOException;
+	
 }
