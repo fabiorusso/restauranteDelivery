@@ -12,8 +12,7 @@ import javax.persistence.criteria.CriteriaQuery;
 import javax.persistence.criteria.Root;
 
 import org.jboss.arquillian.container.test.api.Deployment;
-import org.jboss.arquillian.junit.Arquillian;
-import org.jboss.arquillian.junit.InSequence;
+import org.jboss.arquillian.persistence.ApplyScriptAfter;
 import org.jboss.arquillian.persistence.Cleanup;
 import org.jboss.arquillian.persistence.CleanupStrategy;
 import org.jboss.arquillian.persistence.CleanupUsingScript;
@@ -44,7 +43,7 @@ import br.com.ediel.fabio.restaurante.delivery.model.StatusPedido;
 
 @RunWith(Arquillian.class)
 public class RestauranteDeliveryTest {
-	
+
 	@Deployment
 	public static JavaArchive createDeployArchive() {
 		return ShrinkWrap
@@ -53,7 +52,9 @@ public class RestauranteDeliveryTest {
 						AbstractDAO.class, ItemDAO.class, ItemDAOJPA.class,
 						DAO.class, DAOException.class, PedidoManager.class,
 						PedidoManagerImpl.class, PedidoDAO.class,
-						PedidoDAOJPA.class, StatusPedido.class, ManagerException.class, ReclamacaoDAO.class, ReclamacaoDAOJPA.class)
+						PedidoDAOJPA.class, StatusPedido.class,
+						ManagerException.class, ReclamacaoDAO.class,
+						ReclamacaoDAOJPA.class)
 				.addAsManifestResource(EmptyAsset.INSTANCE, "beans.xml")
 				.addAsResource("test-persistence.xml",
 						"META-INF/persistence.xml");
@@ -102,12 +103,12 @@ public class RestauranteDeliveryTest {
 	@Test
 	@InSequence(3)
 	@UsingDataSet("datasets/xml-test.xml")
-	@Cleanup(phase=TestExecutionPhase.NONE, strategy=CleanupStrategy.DEFAULT)
+	@Cleanup(phase = TestExecutionPhase.NONE, strategy = CleanupStrategy.DEFAULT)
 	public void testRealizarPedido() {
 		ItemDAO dao = new ItemDAOJPA(em);
 
 		Pedido pedido = new Pedido();
-		
+
 		pedido.setNumero(1L);
 		pedido.setObservacao("Com batatas");
 
@@ -120,7 +121,7 @@ public class RestauranteDeliveryTest {
 
 			PedidoManager pedidoManager = new PedidoManagerImpl(em);
 			pedidoManager.realizarPedido(pedido);
-			
+
 		} catch (DAOException e) {
 			fail(e.getMessage());
 		} catch (ManagerException e) {
@@ -128,23 +129,39 @@ public class RestauranteDeliveryTest {
 		}
 
 	}
-	
+
 	@Test
 	@InSequence(4)
-	@CleanupUsingScript(phase = TestExecutionPhase.AFTER, value = "delete from itens_pedido")
+	//@CleanupUsingScript(phase = TestExecutionPhase.AFTER, value = "delete from itens_pedido")
+	@ApplyScriptAfter("datasets/cleanup.sql")
 	public void atenderPedido() {
 		PedidoManager pedidoManager = new PedidoManagerImpl(em);
-		
+
 		try {
 			pedidoManager.atenderPedido(1L);
-			
 			Pedido pedido = pedidoManager.buscarPorNumero(1L);
-			
 			assertEquals(StatusPedido.ENTREGUE, pedido.getStatus());
-			
+			pedido.getItens().forEach(item -> System.out.println(item));
+
 		} catch (ManagerException e) {
 			fail(e.getMessage());
 		}
 	}
+	
+	@Test
+	@InSequence(5)
+	@UsingDataSet("datasets/pedidos-dataset.xml")
+	@CleanupUsingScript(phase = TestExecutionPhase.AFTER, value = "delete from itens_pedido")
+	public void testCalculoFrete() {
+		PedidoManager pedidoManager = new PedidoManagerImpl(em);
+		
+		try {
+			System.out.println(pedidoManager.calcularFretePedido(1L, 50.0));
+		} catch (ManagerException e) {
+			fail(e.getMessage());
+		}
+	}
+	
+	
 
 }
