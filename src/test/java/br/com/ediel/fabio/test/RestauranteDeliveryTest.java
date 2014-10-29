@@ -14,6 +14,8 @@ import javax.persistence.criteria.Root;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.junit.Arquillian;
 import org.jboss.arquillian.junit.InSequence;
+import org.jboss.arquillian.persistence.Cleanup;
+import org.jboss.arquillian.persistence.CleanupStrategy;
 import org.jboss.arquillian.persistence.CleanupUsingScript;
 import org.jboss.arquillian.persistence.TestExecutionPhase;
 import org.jboss.arquillian.persistence.UsingDataSet;
@@ -30,6 +32,8 @@ import br.com.ediel.fabio.restaurante.delivery.dao.ItemDAO;
 import br.com.ediel.fabio.restaurante.delivery.dao.ItemDAOJPA;
 import br.com.ediel.fabio.restaurante.delivery.dao.PedidoDAO;
 import br.com.ediel.fabio.restaurante.delivery.dao.PedidoDAOJPA;
+import br.com.ediel.fabio.restaurante.delivery.dao.ReclamacaoDAO;
+import br.com.ediel.fabio.restaurante.delivery.dao.ReclamacaoDAOJPA;
 import br.com.ediel.fabio.restaurante.delivery.manager.ManagerException;
 import br.com.ediel.fabio.restaurante.delivery.manager.PedidoManager;
 import br.com.ediel.fabio.restaurante.delivery.manager.PedidoManagerImpl;
@@ -49,7 +53,7 @@ public class RestauranteDeliveryTest {
 						AbstractDAO.class, ItemDAO.class, ItemDAOJPA.class,
 						DAO.class, DAOException.class, PedidoManager.class,
 						PedidoManagerImpl.class, PedidoDAO.class,
-						PedidoDAOJPA.class, StatusPedido.class, ManagerException.class)
+						PedidoDAOJPA.class, StatusPedido.class, ManagerException.class, ReclamacaoDAO.class, ReclamacaoDAOJPA.class)
 				.addAsManifestResource(EmptyAsset.INSTANCE, "beans.xml")
 				.addAsResource("test-persistence.xml",
 						"META-INF/persistence.xml");
@@ -98,11 +102,12 @@ public class RestauranteDeliveryTest {
 	@Test
 	@InSequence(3)
 	@UsingDataSet("datasets/xml-test.xml")
-	@CleanupUsingScript(phase = TestExecutionPhase.AFTER, value = "delete from itens_pedido")
+	@Cleanup(phase=TestExecutionPhase.NONE, strategy=CleanupStrategy.DEFAULT)
 	public void testRealizarPedido() {
 		ItemDAO dao = new ItemDAOJPA(em);
 
 		Pedido pedido = new Pedido();
+		
 		pedido.setNumero(1L);
 		pedido.setObservacao("Com batatas");
 
@@ -122,6 +127,24 @@ public class RestauranteDeliveryTest {
 			fail(e.getMessage());
 		}
 
+	}
+	
+	@Test
+	@InSequence(4)
+	@CleanupUsingScript(phase = TestExecutionPhase.AFTER, value = "delete from itens_pedido")
+	public void atenderPedido() {
+		PedidoManager pedidoManager = new PedidoManagerImpl(em);
+		
+		try {
+			pedidoManager.atenderPedido(1L);
+			
+			Pedido pedido = pedidoManager.buscarPorNumero(1L);
+			
+			assertEquals(StatusPedido.ENTREGUE, pedido.getStatus());
+			
+		} catch (ManagerException e) {
+			fail(e.getMessage());
+		}
 	}
 
 }

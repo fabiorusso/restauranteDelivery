@@ -11,5 +11,6 @@ public interface PedidoManager {
 	List<Pedido> buscarTodosEmAberto() throws ManagerException;
 	void registrarReclamacao(Reclamacao reclamacao,Long idPedido) throws ManagerException;
 	Double calcularFretePedido(Long idPedido, Double distanciaKm) throws ManagerException;
+	Pedido buscarPorNumero(Long numero) throws ManagerException;
 }
 

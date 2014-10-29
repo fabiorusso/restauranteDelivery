@@ -44,6 +44,15 @@ public class PedidoManagerImpl implements PedidoManager {
 	}
 
 	@Override
+	public Pedido buscarPorNumero(Long numero) throws ManagerException {
+		try {
+			return dao.find(numero);
+		} catch (DAOException e) {
+			throw new ManagerException(e);
+		}
+	}
+
+	@Override
 	public void atenderPedido(Long id) throws ManagerException {
 		try {
 			Pedido pedido = dao.find(id);
