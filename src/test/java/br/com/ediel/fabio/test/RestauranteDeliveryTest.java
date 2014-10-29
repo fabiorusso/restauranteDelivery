@@ -13,6 +13,9 @@ import javax.persistence.criteria.Root;
 
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.junit.Arquillian;
+import org.jboss.arquillian.junit.InSequence;
+import org.jboss.arquillian.persistence.CleanupUsingScript;
+import org.jboss.arquillian.persistence.TestExecutionPhase;
 import org.jboss.arquillian.persistence.UsingDataSet;
 import org.jboss.shrinkwrap.api.ShrinkWrap;
 import org.jboss.shrinkwrap.api.asset.EmptyAsset;
@@ -37,7 +40,7 @@ import br.com.ediel.fabio.restaurante.delivery.model.StatusPedido;
 
 @RunWith(Arquillian.class)
 public class RestauranteDeliveryTest {
-
+	
 	@Deployment
 	public static JavaArchive createDeployArchive() {
 		return ShrinkWrap
@@ -56,6 +59,7 @@ public class RestauranteDeliveryTest {
 	private EntityManager em;
 
 	@Test
+	@InSequence(1)
 	@UsingDataSet("datasets/xml-test.xml")
 	public void test_db_unit() {
 		CriteriaBuilder builder = em.getCriteriaBuilder();
@@ -68,6 +72,7 @@ public class RestauranteDeliveryTest {
 	}
 
 	@Test
+	@InSequence(2)
 	@UsingDataSet("datasets/xml-test.xml")
 	public void testItemDao() {
 		ItemDAO dao = new ItemDAOJPA(em);
@@ -91,7 +96,9 @@ public class RestauranteDeliveryTest {
 	}
 
 	@Test
+	@InSequence(3)
 	@UsingDataSet("datasets/xml-test.xml")
+	@CleanupUsingScript(phase = TestExecutionPhase.AFTER, value = "delete from itens_pedido")
 	public void testRealizarPedido() {
 		ItemDAO dao = new ItemDAOJPA(em);
 
@@ -104,9 +111,11 @@ public class RestauranteDeliveryTest {
 			pedido.getItens().add(dao.find(2L));
 
 			System.out.println(pedido.calcularTotalPedido());
+			pedido.getItens().forEach(item -> System.out.println(item));
 
 			PedidoManager pedidoManager = new PedidoManagerImpl(em);
 			pedidoManager.realizarPedido(pedido);
+			
 		} catch (DAOException e) {
 			fail(e.getMessage());
 		} catch (ManagerException e) {
