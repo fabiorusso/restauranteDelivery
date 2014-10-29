@@ -29,6 +29,10 @@ public class Reclamacao implements Serializable {
 	@ManyToOne
 	private Pedido pedido;
 	
+	public Reclamacao() {
+		setDataHora(new Date());
+	}
+	
 	public Pedido getPedido() {
 		return pedido;
 	}
@@ -52,6 +56,11 @@ public class Reclamacao implements Serializable {
 	}
 	public void setDataHora(Date dataHora) {
 		this.dataHora = dataHora;
+	}
+	
+	@Override
+	public String toString() {
+		return getId() + " - " + getDataHora() +  " - " + getDescricao();
 	}
 	
 }

@@ -29,7 +29,7 @@ public class Pedido implements Serializable {
 
 	@Column(name = "valor_total")
 	private Double valorTotal;
-	
+
 	private Double frete;
 
 	public Double getFrete() {
@@ -50,10 +50,10 @@ public class Pedido implements Serializable {
 	private Set<Reclamacao> reclamacoes;
 
 	public Pedido() {
-		itens=new HashSet<>();
-		status=StatusPedido.ABERTO;
+		itens = new HashSet<>();
+		status = StatusPedido.ABERTO;
 	}
-	
+
 	public Set<Reclamacao> getReclamacoes() {
 		return reclamacoes;
 	}
@@ -63,9 +63,9 @@ public class Pedido implements Serializable {
 	}
 
 	public Set<Item> getItens() {
-		if(itens==null)
-			itens=new HashSet<>();
-		
+		if (itens == null)
+			itens = new HashSet<>();
+
 		return itens;
 	}
 
@@ -104,15 +104,27 @@ public class Pedido implements Serializable {
 	public void setObservacao(String observacao) {
 		this.observacao = observacao;
 	}
-	
-	//Calcular total
+
+	// Calcular total
 	public Double calcularTotalPedido() {
-		valorTotal=0.0;
-		for(Item i: getItens()) {
-			valorTotal+=i.getValor();
+		valorTotal = 0.0;
+		for (Item i : getItens()) {
+			valorTotal += i.getValor();
 		}
-		
+
 		return valorTotal;
+	}
+
+	@Override
+	public String toString() {
+		return "PEDIDO" + System.lineSeparator() + "Número: " + getNumero()
+				+ System.lineSeparator() + "Status: " + getStatus()
+				+ System.lineSeparator() + "Total: " + getValorTotal()
+				+ System.lineSeparator() + "Valor do Frete: " + getFrete()
+				+ System.lineSeparator() + "Observação: " + getObservacao()
+				+ System.lineSeparator() + "Itens: " + System.lineSeparator()
+				+ "\t" + itens + System.lineSeparator() + "Reclamações: "
+				+ System.lineSeparator() + reclamacoes;
 	}
 
 }

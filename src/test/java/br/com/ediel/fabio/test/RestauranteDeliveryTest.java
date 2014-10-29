@@ -4,6 +4,8 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 
 import java.util.List;
+import java.util.Optional;
+import java.util.OptionalDouble;
 
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
@@ -12,10 +14,11 @@ import javax.persistence.criteria.CriteriaQuery;
 import javax.persistence.criteria.Root;
 
 import org.jboss.arquillian.container.test.api.Deployment;
+import org.jboss.arquillian.junit.Arquillian;
+import org.jboss.arquillian.junit.InSequence;
 import org.jboss.arquillian.persistence.ApplyScriptAfter;
 import org.jboss.arquillian.persistence.Cleanup;
 import org.jboss.arquillian.persistence.CleanupStrategy;
-import org.jboss.arquillian.persistence.CleanupUsingScript;
 import org.jboss.arquillian.persistence.TestExecutionPhase;
 import org.jboss.arquillian.persistence.UsingDataSet;
 import org.jboss.shrinkwrap.api.ShrinkWrap;
@@ -94,6 +97,8 @@ public class RestauranteDeliveryTest {
 			for (Item i : items) {
 				System.out.println(i);
 			}
+			
+			assertEquals(6, items.size());
 
 		} catch (DAOException e) {
 			fail(e.getMessage());
@@ -121,6 +126,12 @@ public class RestauranteDeliveryTest {
 
 			PedidoManager pedidoManager = new PedidoManagerImpl(em);
 			pedidoManager.realizarPedido(pedido);
+			
+			Pedido p = pedidoManager.buscarPorNumero(1L);
+			
+			Optional<Double> somaItens= p.getItens().parallelStream().map(Item::getValor).reduce((a,b) -> a+b);
+			
+			assertEquals(p.getValorTotal(), somaItens.get());
 
 		} catch (DAOException e) {
 			fail(e.getMessage());
@@ -132,7 +143,6 @@ public class RestauranteDeliveryTest {
 
 	@Test
 	@InSequence(4)
-	//@CleanupUsingScript(phase = TestExecutionPhase.AFTER, value = "delete from itens_pedido")
 	@ApplyScriptAfter("datasets/cleanup.sql")
 	public void atenderPedido() {
 		PedidoManager pedidoManager = new PedidoManagerImpl(em);
@@ -151,7 +161,7 @@ public class RestauranteDeliveryTest {
 	@Test
 	@InSequence(5)
 	@UsingDataSet("datasets/pedidos-dataset.xml")
-	@CleanupUsingScript(phase = TestExecutionPhase.AFTER, value = "delete from itens_pedido")
+	@ApplyScriptAfter("datasets/cleanup.sql")
 	public void testCalculoFrete() {
 		PedidoManager pedidoManager = new PedidoManagerImpl(em);
 		
@@ -162,6 +172,53 @@ public class RestauranteDeliveryTest {
 		}
 	}
 	
+	@Test
+	@InSequence(6)
+	@UsingDataSet("datasets/pedidos-dataset.xml")
+	@ApplyScriptAfter("datasets/cleanup.sql")
+	public void testRealizarReclamacao() {
+		
+		try {
+			PedidoManager manager = new PedidoManagerImpl(em);
+			
+			Reclamacao reclamacao = new Reclamacao();
+			
+			reclamacao.setId(1L);
+			reclamacao.setDescricao("Entrega demorada.");
+			
+			manager.registrarReclamacao(reclamacao, 1L);
+			
+			Pedido pedido = manager.buscarPorNumero(1L);
+			
+			pedido.getReclamacoes().forEach(r -> System.out.println(r));
+			
+			assertEquals(1, pedido.getReclamacoes().size());
+			
+		} catch (ManagerException e) {
+			fail(e.getMessage());
+		}
+
+	}
 	
+	@Test
+	@InSequence(7)
+	@UsingDataSet("datasets/pedidos-dataset.xml")
+	@ApplyScriptAfter("datasets/cleanup.sql")
+	public void testBuscarPedidosPendentes() {
+		
+		try {
+			PedidoManager manager = new PedidoManagerImpl(em);
+			
+			List<Pedido> pedidosEmAberto = manager.buscarTodosEmAberto();
+			
+			pedidosEmAberto.forEach(pedido -> System.out.println(pedido));
+			
+			assertEquals(1, pedidosEmAberto.size());
+
+		} catch (ManagerException e) {
+			fail(e.getMessage());
+		}
+
+	}
 
 }
